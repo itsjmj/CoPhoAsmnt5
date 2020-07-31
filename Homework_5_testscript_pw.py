@@ -22,17 +22,34 @@ plt.close('all')
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 # geometry parameters
-max_x = ??  # width of computatinal domain [µm]
+max_x = 5 # width of computatinal domain [µm]
 n0 = 1     # refractive index of the surrounding
 nc = 1.5   # refractive index of the cylinder 
 Rad = 1    # radius of the cylinder [µm]
 
 # simulation parameters
 lam = 1   # wavelength [µm]
-Nx = ??  # number of grid points
-m = ??    # number of the expansion orders retained
+Nx = 500  # number of grid points
+m = 20   # number of the expansion orders retained
 
 
 # %% run simulations and create representative figures of the results %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-# please add your code here
+pol='TM'  #polarization
+u_sca=mie_pw(lam, m, n0, nc, Rad, pol, max_x, Nx) #calculate scattered field
+
+
+if pol=='TE':
+    tit='$E_z$'
+elif pol=='TM':
+    tit='$H_z$'
+else:
+    raise ValueError('Please choose TE or TM mode.')
+
+plt.figure(figsize=[10,7])
+plt.pcolormesh(x,x,np.real(u_sca),cmap='rainbow')
+plt.colorbar()
+plt.title('Scattered field disribution {}'.format(tit))
+plt.xlabel('x/$\mu$m')
+plt.ylabel('y/$\mu$m')
+plt.show()
