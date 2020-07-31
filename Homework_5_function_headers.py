@@ -79,7 +79,7 @@ def mie_pw(lam, m, n0, nc, Rad, pol, max_x, Nx):
     xv,yv = np.meshgrid(x,x)
     r=(xv**2+yv**2)**0.5
     theta=np.arctan(yv/xv)
-    theta[xv<0]=theta[xv<0]+np.pi
+    theta[xv<=0]=theta[xv<=0]+np.pi
     u = np.zeros([Nx,Nx],complex)
     
     f pol=='TE':
