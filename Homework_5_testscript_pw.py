@@ -35,8 +35,8 @@ m = 20   # number of the expansion orders retained
 
 # %% run simulations and create representative figures of the results %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pol='TM'  #polarization
-u_sca=mie_pw(lam, m, n0, nc, Rad, pol, max_x, Nx) #calculate scattered field
+pol='TM' #polarization
+u=mie_pw(lam, m, n0, nc, Rad, pol, max_x, Nx)
 
 
 if pol=='TE':
@@ -46,10 +46,21 @@ elif pol=='TM':
 else:
     raise ValueError('Please choose TE or TM mode.')
 
+# plot field distribution
+x = np.linspace(-max_x,max_x,Nx)
 plt.figure(figsize=[10,7])
-plt.pcolormesh(x,x,np.real(u_sca),cmap='rainbow')
+plt.pcolormesh(x,x,np.real(u),cmap='rainbow')
 plt.colorbar()
 plt.title('Scattered field disribution {}'.format(tit))
+plt.xlabel('x/$\mu$m')
+plt.ylabel('y/$\mu$m')
+plt.show()
+
+#plot field intensity
+plt.figure(figsize=[10,7])
+plt.pcolormesh(x,x,np.abs(u)**2,cmap='rainbow')
+plt.colorbar()
+plt.title('Scattered field intensity {}'.format(tit))
 plt.xlabel('x/$\mu$m')
 plt.ylabel('y/$\mu$m')
 plt.show()
