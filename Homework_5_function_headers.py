@@ -75,27 +75,31 @@ def mie_pw(lam, m, n0, nc, Rad, pol, max_x, Nx):
             Matrix containing the amplitude of the plane wave scattered at a cylinder
             [matrix with dimensions Nx x Nx]
     '''
+    #create coordinates
     x = np.linspace(-max_x,max_x,Nx)
     xv,yv = np.meshgrid(x,x)
     r=(xv**2+yv**2)**0.5
     theta=np.arctan(yv/xv)
     theta[xv<=0]=theta[xv<=0]+np.pi
+    
+    #new matrices
     u = np.zeros([Nx,Nx],complex)
     
-    f pol=='TE':
+    #identify polarization
+    if pol=='TE':
         p0=1
         pc=1
     elif pol=='TM':
         p0=1/n0**2
         pc=1/nc**2
     else:
-        raise ValueError('Please choose TE or TM mode.'）
+        raise ValueError('Please choose TE or TM mode.')
     
-    #create new marices
+    #create new marices for mie coefficients
     am=np.zeros(2*m+1,complex)
     bm=np.zeros(2*m+1,complex)
     
-    
+    #calculate mie coefficients
     k=2*np.pi/lam
     for i in range(-m,m+1): 
         am[i+m]=(sp.jv(i,k*n0*Rad)*dr_jv(i,k*nc*Rad)*p0-
@@ -105,8 +109,10 @@ def mie_pw(lam, m, n0, nc, Rad, pol, max_x, Nx):
             sp.hankel1(i,k*n0*Rad)*dr_jv(i,k*nc*Rad)*pc)/(sp.jv(i,k*nc*Rad)*dr_hv(i,k*n0*Rad)*pc-
             sp.hankel1(i,k*n0*Rad)*dr_jv(i,k*nc*Rad)*p0)
    
-        u[r<=Rad]=u[r<=Rad]+bm[i+m]*1j**i*sp.jv(i,k*nc*r[r<=Rad])*np.exp(-1j*i*theta[r<=Rad])
-        u[r>Rad]=u[r>Rad]+am[i+m]*1j**i*sp.hankel1(i,k*n0*r[r>Rad])*np.exp(-1j*i*theta[r>Rad])
+        u[r<=Rad]=u[r<=Rad]+bm[i+m]*1j**i*sp.jv(i,k*nc*r[r<=Rad])*np.exp(-1j*i*theta[r<=Rad])  #internal field
+        u[r>Rad]=u[r>Rad]+am[i+m]*1j**i*sp.hankel1(i,k*n0*r[r>Rad])*np.exp(-1j*i*theta[r>Rad]) #scattered field
+    
+    u=u+np.exp(1j*k*n0*xv)  #total field
                                                           
     return u
 
