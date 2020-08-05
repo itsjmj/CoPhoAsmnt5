@@ -3,7 +3,10 @@
 
 import numpy as np
 import scipy.special
-
+from scipy.special import jv
+from scipy.special import jvp
+from scipy.special import hankel1 as hv
+from scipy.special import h1vp as hvp
 
 
 def pw_expansion(lam, m, n0, max_x, Nx):
@@ -35,10 +38,25 @@ def pw_expansion(lam, m, n0, max_x, Nx):
             Matrix containing the analytical solution of the plane wave
             [matrix with dimensions Nx x Nx]            
     '''
-    pass
-            
+    k = n0*2*np.pi/lam
+    x = np.linspace(-max_x,max_x,Nx)
+    y = np.linspace(-max_x,max_x,Nx)
+    X,Y = np.meshgrid(x,y)
+    R = np.sqrt(X**2 + Y**2)
+    theta = np.arctan(Y/X)
+    m_vec = np.arange(-m,m+1,1)
+    
+    u_an = np.exp(1j*k*X)
+    u = np.zeros((u_an.shape),dtype=complex)
+    
+    for m in m_vec:
+       u += (1j**m)*jv(m,k*R)*np.exp(-1j*m*theta)
+    
+    return u,u_an
 
+#%%
 
+#%%
 def mie_pw(lam, m, n0, nc, Rad, pol, max_x, Nx):
     '''Calculates the amplitude distribution of a plane wave scattered at a cylinder.
        Computational domain has dimensions x = [-max_x, max_x], y = [-max_x, max_x].
@@ -72,7 +90,37 @@ def mie_pw(lam, m, n0, nc, Rad, pol, max_x, Nx):
             Matrix containing the amplitude of the plane wave scattered at a cylinder
             [matrix with dimensions Nx x Nx]
     '''
-    pass
+    
+    
+    n1 = n0
+    n2 = nc
+    k1 = n1*2*np.pi/lam
+    k2 = n2*2*np.pi/lam
+    z1 = k1*Rad
+    z2 = k2*Rad   
+    if pol == 'TE':
+        p1 = p2 = 1
+    if pol == 'TM':
+        p1 = n1**2
+        p2 = n2**2
+    x = np.linspace(-max_x,max_x,Nx)
+    y = np.linspace(-max_x,max_x,Nx)
+    X,Y = np.meshgrid(x,y)
+    R = np.sqrt(X**2 + Y**2)
+    theta = np.arctan(Y/X)
+    m_vec = np.arange(-m,m+1,1)
+    
+    u = np.zeros((Nx,Nx),dtype=complex)
+    
+    for m in m_vec:
+       am = (jvp(m,z2)*jv(m,z1)*p1*n2 - jvp(m,z1)*jv(m,z2)*p2*n1)/(hvp(m,z1)*jv(m,z2)*p2*n1 - hv(m,z1)*jvp(m,z2)*p1*n2)
+       bm = (hvp(m,z1)*jv(m,z1)*p2*n1 - hv(m,z1)*jvp(m,z1)*p2*n1)/(hvp(m,z1)*jv(m,z2)*p2*n1 - hv(m,z1)*jvp(m,z2)*p1*n2)
+       
+       u[R>Rad] += (1j**m)*am*hv(m,k1*R[R>Rad])*np.exp(-1j*m*theta[R>Rad])
+       u[R<=Rad] += (1j**m)*bm*jv(m,k2*R[R<=Rad])*np.exp(-1j*m*theta[R<=Rad])
+    
+    u[R>Rad] += np.exp(1j*k*X[R>Rad])
+    return u
 
             
 
@@ -113,4 +161,44 @@ def mie_gauss(lam, waist, m, n0, nc, Rad, pol, max_x, Nx):
             Matrix containing the amplitude of the Gaussian beam scattered at a cylinder
             [matrix with dimensions Nx x Nx]
     '''
-    pass
+ 
+    n1 = n0
+    n2 = nc
+    k1 = n1*2*np.pi/lam
+    k2 = n2*2*np.pi/lam
+    z1 = k1*Rad
+    z2 = k2*Rad   
+    if pol == 'TE':
+        p1 = p2 = 1
+    if pol == 'TM':
+        p1 = n1**2
+        p2 = n2**2
+    x = np.linspace(-max_x,max_x,Nx)
+    y = np.linspace(-max_x,max_x,Nx)
+    X,Y = np.meshgrid(x,y)
+    R = np.sqrt(X**2 + Y**2)
+    theta = np.arctan(Y/X)
+    m_vec = np.arange(-m,m+1,1)
+    
+    u = np.zeros((Nx,Nx),dtype=complex)
+    w = waist
+    rho = 2/w
+    dky = rho/10
+    ky_vec = np.arange(-3*rho,3*rho + dky,dky)
+    ky_vec = np.array(ky_vec,dtype=complex)
+    k1 = k1 + 0j
+    
+    for ky in ky_vec:
+        kx = np.sqrt(k1**2 - ky**2)
+        thetak = np.arctan(ky/kx)
+        ck = (w/np.sqrt(4*np.pi))*np.exp(-(w*ky/2)**2)*dky
+        u[R>Rad] += ck*np.exp(1j*(ky*Y[R>Rad] + np.sqrt(k1**2 - ky**2)*X[R>Rad]))
+        for m in m_vec:
+            am = (jvp(m,z2)*jv(m,z1)*p1*n2 - jvp(m,z1)*jv(m,z2)*p2*n1)/(hvp(m,z1)*jv(m,z2)*p2*n1 - hv(m,z1)*jvp(m,z2)*p1*n2)
+            bm = (hvp(m,z1)*jv(m,z1)*p2*n1 - hv(m,z1)*jvp(m,z1)*p2*n1)/(hvp(m,z1)*jv(m,z2)*p2*n1 - hv(m,z1)*jvp(m,z2)*p1*n2)
+            
+            u[R>Rad] += ck*(1j**m)*am*hv(m,k1*R[R>Rad])*np.exp(-1j*m*(theta[R>Rad]-thetak)) 
+            u[R<=Rad] += ck*bm*(1j**m)*jv(m,k1*R[R<=Rad])*np.exp(-1j*m*(theta[R<=Rad]-thetak))
+
+    
+    return u
