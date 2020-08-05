@@ -38,7 +38,7 @@ def pw_expansion(lam, m, n0, max_x, Nx):
     pass
             
 def dr_jv(m,x):
-    return x*sp.jv(m-1,x)-m*sp.jv(m,x)
+    return sp.jv(m-1,x)-m*sp.jv(m,x)/x
 def dr_hv(m,x):
     return m*sp.hankel1(m,x)/x-sp.hankel1(m+1,x)
 
@@ -75,6 +75,7 @@ def mie_pw(lam, m, n0, nc, Rad, pol, max_x, Nx):
             Matrix containing the amplitude of the plane wave scattered at a cylinder
             [matrix with dimensions Nx x Nx]
     '''
+    
     #create coordinates
     x = np.linspace(-max_x,max_x,Nx)
     xv,yv = np.meshgrid(x,x)
@@ -90,8 +91,8 @@ def mie_pw(lam, m, n0, nc, Rad, pol, max_x, Nx):
         p0=1
         pc=1
     elif pol=='TM':
-        p0=1/n0**2
-        pc=1/nc**2
+        p0=n0**2
+        pc=nc**2
     else:
         raise ValueError('Please choose TE or TM mode.')
     
@@ -102,12 +103,12 @@ def mie_pw(lam, m, n0, nc, Rad, pol, max_x, Nx):
     #calculate mie coefficients
     k=2*np.pi/lam
     for i in range(-m,m+1): 
-        am[i+m]=(sp.jv(i,k*n0*Rad)*dr_jv(i,k*nc*Rad)*p0-
-            sp.jv(i,k*nc*Rad)*dr_jv(i,k*n0*Rad)*pc)/(sp.jv(i,k*nc*Rad)*dr_hv(i,k*n0*Rad)*pc-
-            sp.hankel1(i,k*n0*Rad)*dr_jv(i,k*nc*Rad)*p0)
-        bm[i+m]=(sp.jv(i,k*n0*Rad)*dr_hv(i,k*n0*Rad)*pc-
-            sp.hankel1(i,k*n0*Rad)*dr_jv(i,k*nc*Rad)*pc)/(sp.jv(i,k*nc*Rad)*dr_hv(i,k*n0*Rad)*pc-
-            sp.hankel1(i,k*n0*Rad)*dr_jv(i,k*nc*Rad)*p0)
+        am[i+m]=(sp.jv(i,k*n0*Rad)*dr_jv(i,k*nc*Rad)*p0*nc-
+            sp.jv(i,k*nc*Rad)*dr_jv(i,k*n0*Rad)*pc*n0)/(sp.jv(i,k*nc*Rad)*dr_hv(i,k*n0*Rad)*pc*n0-
+            sp.hankel1(i,k*n0*Rad)*dr_jv(i,k*nc*Rad)*p0*nc)
+        bm[i+m]=(sp.jv(i,k*n0*Rad)*dr_hv(i,k*n0*Rad)*pc*n0-
+            sp.hankel1(i,k*n0*Rad)*dr_jv(i,k*n0*Rad)*pc*n0)/(sp.jv(i,k*nc*Rad)*dr_hv(i,k*n0*Rad)*pc*n0-
+            sp.hankel1(i,k*n0*Rad)*dr_jv(i,k*nc*Rad)*p0*nc)
    
         u[r<=Rad]=u[r<=Rad]+bm[i+m]*1j**i*sp.jv(i,k*nc*r[r<=Rad])*np.exp(-1j*i*theta[r<=Rad])  #internal field
         u[r>Rad]=u[r>Rad]+am[i+m]*1j**i*sp.hankel1(i,k*n0*r[r>Rad])*np.exp(-1j*i*theta[r>Rad]) #scattered field
