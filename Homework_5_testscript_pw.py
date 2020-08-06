@@ -25,11 +25,11 @@ plt.close('all')
 max_x = 20  # width of computatinal domain [µm]
 n0 = 1     # refractive index of the surrounding
 nc = 1.5#np.sqrt(13)#1.5   # refractive index of the cylinder 
-Rad = 1/4    # radius of the cylinder [µm]
+Rad = 5    # radius of the cylinder [µm]
 
 # simulation parameters
 lam = 1 #5/0.5   # wavelength [µm]
-Nx = 200  # number of grid points
+Nx = 100  # number of grid points
 m = 10    # number of the expansion orders retained
 
 

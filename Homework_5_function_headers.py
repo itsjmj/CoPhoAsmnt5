@@ -43,7 +43,7 @@ def pw_expansion(lam, m, n0, max_x, Nx):
     y = np.linspace(-max_x,max_x,Nx)
     X,Y = np.meshgrid(x,y)
     R = np.sqrt(X**2 + Y**2)
-    theta = np.arctan(Y/X)
+    theta = np.arctan2(Y,X)
     m_vec = np.arange(-m,m+1,1)
     
     u_an = np.exp(1j*k*X)
@@ -107,7 +107,7 @@ def mie_pw(lam, m, n0, nc, Rad, pol, max_x, Nx):
     y = np.linspace(-max_x,max_x,Nx)
     X,Y = np.meshgrid(x,y)
     R = np.sqrt(X**2 + Y**2)
-    theta = np.arctan(Y/X)
+    theta = np.arctan2(Y,X)
     m_vec = np.arange(-m,m+1,1)
     
     u = np.zeros((Nx,Nx),dtype=complex)
@@ -119,7 +119,7 @@ def mie_pw(lam, m, n0, nc, Rad, pol, max_x, Nx):
        u[R>Rad] += (1j**m)*am*hv(m,k1*R[R>Rad])*np.exp(-1j*m*theta[R>Rad])
        u[R<=Rad] += (1j**m)*bm*jv(m,k2*R[R<=Rad])*np.exp(-1j*m*theta[R<=Rad])
     
-    u[R>Rad] += np.exp(1j*k*X[R>Rad])
+    u[R>Rad] += np.exp(1j*k1*X[R>Rad])
     return u
 
             
@@ -177,22 +177,23 @@ def mie_gauss(lam, waist, m, n0, nc, Rad, pol, max_x, Nx):
     y = np.linspace(-max_x,max_x,Nx)
     X,Y = np.meshgrid(x,y)
     R = np.sqrt(X**2 + Y**2)
-    theta = np.arctan(Y/X)
+    theta = np.arctan2(Y,X)
     m_vec = np.arange(-m,m+1,1)
     
     u = np.zeros((Nx,Nx),dtype=complex)
     w = waist
     rho = 2/w
     dky = rho/10
-    ky_vec = np.arange(-3*rho,3*rho + dky,dky)
-    ky_vec = np.array(ky_vec,dtype=complex)
-    k1 = k1 + 0j
-    
+    Nk = np.rint(k1/dky)*2 + 1
+    Nk = int(Nk)
+    ky_vec = np.linspace(-k1,k1,Nk) 
+    dky = np.abs(ky_vec[1] - ky_vec[0])
     for ky in ky_vec:
+        print(ky)
         kx = np.sqrt(k1**2 - ky**2)
-        thetak = np.arctan(ky/kx)
+        thetak = np.arctan2(ky,kx)
         ck = (w/np.sqrt(4*np.pi))*np.exp(-(w*ky/2)**2)*dky
-        u[R>Rad] += ck*np.exp(1j*(ky*Y[R>Rad] + np.sqrt(k1**2 - ky**2)*X[R>Rad]))
+        u[R>Rad] += ck*np.exp(1j*(ky*Y[R>Rad] + kx*X[R>Rad]))
         for m in m_vec:
             am = (jvp(m,z2)*jv(m,z1)*p1*n2 - jvp(m,z1)*jv(m,z2)*p2*n1)/(hvp(m,z1)*jv(m,z2)*p2*n1 - hv(m,z1)*jvp(m,z2)*p1*n2)
             bm = (hvp(m,z1)*jv(m,z1)*p2*n1 - hv(m,z1)*jvp(m,z1)*p2*n1)/(hvp(m,z1)*jv(m,z2)*p2*n1 - hv(m,z1)*jvp(m,z2)*p1*n2)
@@ -200,5 +201,4 @@ def mie_gauss(lam, waist, m, n0, nc, Rad, pol, max_x, Nx):
             u[R>Rad] += ck*(1j**m)*am*hv(m,k1*R[R>Rad])*np.exp(-1j*m*(theta[R>Rad]-thetak)) 
             u[R<=Rad] += ck*bm*(1j**m)*jv(m,k1*R[R<=Rad])*np.exp(-1j*m*(theta[R<=Rad]-thetak))
 
-    
     return u
