@@ -35,7 +35,36 @@ def pw_expansion(lam, m, n0, max_x, Nx):
             Matrix containing the analytical solution of the plane wave
             [matrix with dimensions Nx x Nx]            
     '''
-    pass
+    
+    x = np.linspace(-max_x,max_x,Nx)
+    xv,yv = np.meshgrid(x,x)
+    r=(xv**2+yv**2)**0.5
+    theta=np.arctan(yv/xv)
+    theta[xv<=0]=theta[xv<=0]+np.pi
+
+    #new matrices
+    u = np.zeros([Nx,Nx],complex)
+    
+    k=2*np.pi*n0/lam
+    #plane wave
+    u1 = u+np.exp(1j*k*xv)
+    # expansion
+    u2 = u
+    
+    for i in range(-m,m+1): 
+        u2=u2+1j**i*sp.jv(i,k*r)*np.exp(-1j*i*theta)  #internal field
+        
+    
+    
+    # Not sure if I've made a mistake somewhere, field distributions look good to me
+    
+    u2=u2+np.exp(1j*k*xv)
+    
+    
+    
+    
+    
+    return u1, u2
             
 def dr_jv(m,x):
     return sp.jv(m-1,x)-m*sp.jv(m,x)/x
