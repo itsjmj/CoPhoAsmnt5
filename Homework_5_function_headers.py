@@ -142,7 +142,7 @@ def mie_pw(lam, m, n0, nc, Rad, pol, max_x, Nx):
         u[r<=Rad]=u[r<=Rad]+bm[i+m]*1j**i*sp.jv(i,k*nc*r[r<=Rad])*np.exp(-1j*i*theta[r<=Rad])  #internal field
         u[r>Rad]=u[r>Rad]+am[i+m]*1j**i*sp.hankel1(i,k*n0*r[r>Rad])*np.exp(-1j*i*theta[r>Rad]) #scattered field
     
-    u=u+np.exp(1j*k*n0*xv)  #total field
+    u[r>Rad]=u[r>Rad]+np.exp(1j*k*n0*xv[r>Rad])  #total field
                                                           
     return u
 
